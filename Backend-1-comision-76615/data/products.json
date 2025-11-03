@@ -1,0 +1,28 @@
+[
+  {
+    "id": "932bb8d1-1995-4e43-8380-e34f447e9f28",
+    "title": "Mouse Gamer",
+    "description": "RGB 16000 DPI",
+    "code": "MG-001",
+    "price": 19999,
+    "status": true,
+    "stock": 50,
+    "category": "peripherals",
+    "thumbnails": [
+      "/imgs/mouse1.png"
+    ]
+  },
+  {
+    "id": "6a266ae2-bc6f-4e63-9f8f-9bf787be719e",
+    "title": "Teclado Gamer",
+    "description": "Mec�nico RGB",
+    "code": "KB-001",
+    "price": 19990,
+    "status": true,
+    "stock": 5,
+    "category": "peripherals",
+    "thumbnails": [
+      "/img/kb.png"
+    ]
+  }
+]
