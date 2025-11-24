@@ -43,6 +43,12 @@ if (missing.length) return res.status(400).json({ status: 'error', error: `Missi
 
 
 const newProduct = await pm.add({ title, description, code, price, status, stock, category, thumbnails: thumbnails ?? [] });
+// Emitir evento socket para actualizar la vista en tiempo real
+const io = req.app.get('io');
+if (io) {
+  const products = await pm.getAll();
+  io.emit('productsUpdated', products);
+}
 res.status(201).json({ status: 'success', payload: newProduct });
 } catch (err) { next(err); }
 });
@@ -65,6 +71,12 @@ try {
 const { pid } = req.params;
 const ok = await pm.deleteById(pid);
 if (!ok) return res.status(404).json({ status: 'error', error: 'Product not found' });
+// Emitir evento socket para actualizar la vista en tiempo real
+const io = req.app.get('io');
+if (io) {
+  const products = await pm.getAll();
+  io.emit('productsUpdated', products);
+}
 res.json({ status: 'success', message: 'Product deleted' });
 } catch (err) { next(err); }
 });

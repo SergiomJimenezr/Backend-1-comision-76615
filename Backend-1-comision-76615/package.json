@@ -11,9 +11,11 @@
 "keywords": [],
 "author": "",
 "license": "MIT",
-"dependencies": {
-"express": "^4.19.2"
-},
+  "dependencies": {
+    "express": "^4.19.2",
+    "express-handlebars": "^7.1.2",
+    "socket.io": "^4.7.2"
+  },
 "devDependencies": {
 "nodemon": "^3.0.1"
 }

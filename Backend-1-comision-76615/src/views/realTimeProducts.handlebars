@@ -1,0 +1,129 @@
+<h2>Productos en Tiempo Real</h2>
+
+<div class="form-container">
+    <h3>Agregar Nuevo Producto</h3>
+    <form id="productForm">
+        <div class="form-group">
+            <label for="title">Título:</label>
+            <input type="text" id="title" name="title" required>
+        </div>
+        <div class="form-group">
+            <label for="description">Descripción:</label>
+            <textarea id="description" name="description" required></textarea>
+        </div>
+        <div class="form-group">
+            <label for="code">Código:</label>
+            <input type="text" id="code" name="code" required>
+        </div>
+        <div class="form-group">
+            <label for="price">Precio:</label>
+            <input type="number" id="price" name="price" step="0.01" required>
+        </div>
+        <div class="form-group">
+            <label for="stock">Stock:</label>
+            <input type="number" id="stock" name="stock" required>
+        </div>
+        <div class="form-group">
+            <label for="category">Categoría:</label>
+            <input type="text" id="category" name="category" required>
+        </div>
+        <div class="form-group">
+            <label for="status">Estado:</label>
+            <select id="status" name="status" required>
+                <option value="true">Activo</option>
+                <option value="false">Inactivo</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Agregar Producto</button>
+    </form>
+</div>
+
+<div id="productsContainer">
+    <h3>Lista de Productos</h3>
+    <div id="productsList" class="products-grid">
+        {{#if products.length}}
+            {{#each products}}
+                <div class="product-card" data-product-id="{{id}}">
+                    <h3>{{title}}</h3>
+                    <p><strong>ID:</strong> {{id}}</p>
+                    <p><strong>Descripción:</strong> {{description}}</p>
+                    <p><strong>Código:</strong> {{code}}</p>
+                    <p><strong>Precio:</strong> ${{price}}</p>
+                    <p><strong>Stock:</strong> {{stock}}</p>
+                    <p><strong>Categoría:</strong> {{category}}</p>
+                    <p><strong>Estado:</strong> {{#if status}}Activo{{else}}Inactivo{{/if}}</p>
+                    <button class="btn btn-danger delete-btn" onclick="deleteProduct('{{id}}')">Eliminar</button>
+                </div>
+            {{/each}}
+        {{else}}
+            <div class="no-products">
+                <p>No hay productos disponibles</p>
+            </div>
+        {{/if}}
+    </div>
+</div>
+
+<script>
+    const socket = io();
+
+    // Escuchar actualizaciones de productos
+    socket.on('productsUpdated', (products) => {
+        updateProductsList(products);
+    });
+
+    // Manejar el formulario
+    document.getElementById('productForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const product = {
+            title: formData.get('title'),
+            description: formData.get('description'),
+            code: formData.get('code'),
+            price: parseFloat(formData.get('price')),
+            stock: parseInt(formData.get('stock')),
+            category: formData.get('category'),
+            status: formData.get('status') === 'true'
+        };
+
+        socket.emit('createProduct', product);
+        e.target.reset();
+    });
+
+    // Función para eliminar producto
+    function deleteProduct(productId) {
+        if (confirm('¿Estás seguro de que deseas eliminar este producto?')) {
+            socket.emit('deleteProduct', productId);
+        }
+    }
+
+    // Función para actualizar la lista de productos
+    function updateProductsList(products) {
+        const container = document.getElementById('productsList');
+        
+        if (products.length === 0) {
+            container.innerHTML = '<div class="no-products"><p>No hay productos disponibles</p></div>';
+            return;
+        }
+
+        container.innerHTML = products.map(product => {
+            const escapedId = product.id.replace(/'/g, "\\'");
+            const escapedTitle = product.title.replace(/"/g, '&quot;').replace(/'/g, "&#39;");
+            const escapedDesc = product.description.replace(/"/g, '&quot;').replace(/'/g, "&#39;");
+            return `
+            <div class="product-card" data-product-id="${escapedId}">
+                <h3>${escapedTitle}</h3>
+                <p><strong>ID:</strong> ${escapedId}</p>
+                <p><strong>Descripción:</strong> ${escapedDesc}</p>
+                <p><strong>Código:</strong> ${product.code}</p>
+                <p><strong>Precio:</strong> $${product.price}</p>
+                <p><strong>Stock:</strong> ${product.stock}</p>
+                <p><strong>Categoría:</strong> ${product.category}</p>
+                <p><strong>Estado:</strong> ${product.status ? 'Activo' : 'Inactivo'}</p>
+                <button class="btn btn-danger delete-btn" onclick="deleteProduct('${escapedId}')">Eliminar</button>
+            </div>
+        `;
+        }).join('');
+    }
+</script>
+
