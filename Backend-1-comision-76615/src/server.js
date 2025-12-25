@@ -1,7 +1,9 @@
+// Imports
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { engine } from 'express-handlebars';
+import { registerHelpers } from './utils/handlebarsHelpers.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import productsRouter from './routes/products.router.js';
@@ -9,7 +11,7 @@ import cartsRouter from './routes/carts.router.js';
 import viewsRouter from './routes/views.router.js';
 import { ensureDataFiles } from './utils/ensureDataFiles.js';
 import { ProductManager } from './storage/ProductManager.js';
-import { resolvePath } from './utils/paths.js';
+import { connectDB } from './config/database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -19,15 +21,20 @@ const httpServer = createServer(app);
 const io = new Server(httpServer);
 const PORT = 8080;
 
-// Configurar Handlebars
-app.engine('handlebars', engine());
+// Sets - Configuraciones del servidor
+const hbs = engine();
+registerHelpers(hbs);
+app.engine('handlebars', hbs);
 app.set('view engine', 'handlebars');
 app.set('views', join(__dirname, 'views'));
+app.set('io', io);
 
+// Uses - Middlewares y rutas
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 await ensureDataFiles();
+await connectDB();
 
 // Router de vistas
 app.use('/', viewsRouter);
@@ -36,15 +43,8 @@ app.use('/', viewsRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
 
-// Middleware de error
-app.use((err, _req, res, _next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({ status: 'error', error: 'Internal Server Error' });
-});
-
 // Configurar Socket.io
-const productsPath = resolvePath('data/products.json');
-const pm = new ProductManager(productsPath);
+const pm = new ProductManager();
 
 io.on('connection', (socket) => {
   console.log('Cliente conectado:', socket.id);
@@ -82,8 +82,11 @@ io.on('connection', (socket) => {
   });
 });
 
-// Exportar io para usarlo en el router de productos
-app.set('io', io);
+// Middleware de error - Siempre al final, antes de iniciar el servidor
+app.use((err, _req, res, _next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ status: 'error', error: 'Internal Server Error' });
+});
 
 // Iniciar servidor
 httpServer.listen(PORT, () => {
