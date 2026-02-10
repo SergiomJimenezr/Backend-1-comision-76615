@@ -9,9 +9,11 @@ import { dirname, join } from 'path';
 import productsRouter from './routes/products.router.js';
 import cartsRouter from './routes/carts.router.js';
 import viewsRouter from './routes/views.router.js';
+import sessionsRouter from './routes/sessions.router.js';
 import { ensureDataFiles } from './utils/ensureDataFiles.js';
 import { ProductManager } from './storage/ProductManager.js';
 import { connectDB } from './config/database.js';
+import passport from './config/passport.config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -33,6 +35,9 @@ app.set('io', io);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Inicializar Passport
+app.use(passport.initialize());
+
 await ensureDataFiles();
 await connectDB();
 
@@ -42,6 +47,7 @@ app.use('/', viewsRouter);
 // API Routes
 app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
+app.use('/api/sessions', sessionsRouter);
 
 // Configurar Socket.io
 const pm = new ProductManager();
